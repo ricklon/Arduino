@@ -116,7 +116,7 @@ public class Compiler implements MessageConsumer {
 
 		avrBasePath = configPreferences.get("compiler.path");
 		
-		System.out.println("avrBasePath: " + avrBasePath);
+		logger.debug("avrBasePath: " + avrBasePath);
 		if (avrBasePath == null) 
 		{
 			avrBasePath = Base.getAvrBasePath();
@@ -164,20 +164,23 @@ public class Compiler implements MessageConsumer {
 		/*
 		* Debug corePath
 		*/
-			System.out.println("corePaths: " + this.corePath);
+			logger.debug("corePaths: " + this.corePath);
 
 		
 		this.objectFiles = new ArrayList<File>();
 				
 		// 0. include paths for core + all libraries
+		logger.debug("0. getIncludes");
 		this.includePaths =	getIncludes(this.corePath);
 		
 		// 1. compile the sketch (already in the buildPath)
+		logger.debug("1. compileSketch");
 		compileSketch(avrBasePath, buildPath, includePaths, configPreferences);
 
 		// 2. compile the libraries, outputting .o files to:
 		// <buildPath>/<library>/
 		//Doesn't really use configPreferences
+		logger.debug("2. compileLibraries");
 		compileLibraries(avrBasePath, buildPath, includePaths, configPreferences);
 
 		// 3. compile the core, outputting .o files to <buildPath> and then
@@ -263,14 +266,15 @@ public class Compiler implements MessageConsumer {
     
     if (verbose || Preferences.getBoolean("build.verbose")) 
 	{
-      //System.out.print(command);
-      //System.out.println();
-      if(logger.isDebugEnabled()) {     
+      System.out.print(command.replace(":"," "));
+      System.out.println();
+      /*if(logger.isDebugEnabled()) {     
  		for (int i = 0; i < commandArray.length; i++) {
                         logger.debug("commandArray[" + i + "]: " + commandArray[i]);
               }
          logger.debug("Command: " + command.replace(":"," "));
-      }
+       
+      }*/
     }
 
     firstErrorFound = false;  // haven't found any errors yet
@@ -526,10 +530,12 @@ public class Compiler implements MessageConsumer {
 	// 0. include paths for core + all libraries
 	ArrayList<String> getIncludes(String corePath) 
 	{
+		logger.debug("corePath: " + corePath);
 		ArrayList<String> includePaths = new ArrayList();
 		includePaths.add(corePath);
 		for (File file : sketch.getImportedLibraries()) 
 		{
+			logger.debug("getImportedLibraries: " + file.getPath());
 			includePaths.add(file.getPath());
 		}
 		return includePaths;
@@ -715,7 +721,7 @@ public class Compiler implements MessageConsumer {
   	    	}
 	    }
 	    
-		System.out.println("Done: Preferences");
+		//logger.debug("Done: Preferences");
 		
 		iterator = platformPreferences.entrySet().iterator();
        
@@ -734,7 +740,7 @@ public class Compiler implements MessageConsumer {
             //System.out.println(pair.getKey() + " = " + pair.getValue());
 	    }
 
-		System.out.println("Done: platformPreferences");
+		//System.out.println("Done: platformPreferences");
 		iterator = boardPreferences.entrySet().iterator();
 
         while(iterator.hasNext())
@@ -751,7 +757,7 @@ public class Compiler implements MessageConsumer {
   	    	}
             //System.out.println(pair.getKey() + " = " + pair.getValue());
 	    }
-		System.out.println("Done: boardPreferences");
+		//System.out.println("Done: boardPreferences");
         
 
 	return _map;
