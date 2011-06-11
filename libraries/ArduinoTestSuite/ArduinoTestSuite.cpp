@@ -58,6 +58,7 @@ enum
 	
 };
 unsigned long	gTestStartTime;
+unsigned long	gTestTotalElapsedTime;
 short			gTagIndent;
 int				gYotalErrors;
 int				gTestCount;
@@ -176,9 +177,9 @@ char	memoryMsg[48];
 	gTestCount		=	0;
 
 	Serial.begin(9600);
-	delay(1000);
+	delay(100);
 	
-	gTestStartTime	=	millis();
+	gTestTotalElapsedTime = 0;
 
 	Serial.println();
 	Serial.println();
@@ -197,14 +198,17 @@ char	memoryMsg[48];
 
 	randomSeed(analogRead(0));
 
+	gTestStartTime = micros();
 }
 
 //************************************************************************
 void	ATS_end()
 {
-long	seconds;
-long	milliSecs;
+unsigned long seconds;
+unsigned long microSecs;
+char buf[8];
 
+	gTestTotalElapsedTime += (micros() - gTestStartTime);
 
 	Serial_println_P(gTextMsg_dashLine);
 	
@@ -212,14 +216,24 @@ long	milliSecs;
 	Serial.print("Ran ");
 	Serial.print(gTestCount);
 	Serial.print(" tests in ");
+
+	seconds = gTestTotalElapsedTime / 1000000;
+	microSecs = gTestTotalElapsedTime % 1000000;
 	
-	seconds		=	millis() / 1000;
-	milliSecs	=	millis() % 1000;
 	Serial.print(seconds);
-	Serial.print('.');
-	Serial.print(milliSecs);
+	ultoa(microSecs + 1000000, buf, 10); // add forces leading zeros
+	buf[0] = '.'; // replace leading '1' with decimal point
+	Serial.print(buf);
 	Serial.print('s');
 	Serial.println();
+
+	Serial.print("Maximum heap memory: ");
+	int used = ATS_GetMaximumMemoryAllocated();
+	if (used >= 0) {
+		Serial.println(used);
+	} else {
+		Serial.println("(unknown)");
+	}
 	Serial.println();
 
 	if (gYotalErrors == 0)
@@ -245,6 +259,9 @@ void ATS_PrintTestStatus(char *testString, boolean passed)
 {
 int	sLen;
 
+	// do not include time printing status in total test time
+	gTestTotalElapsedTime += (micros() - gTestStartTime);
+
 	Serial.print(testString);
 	sLen	=	strlen(testString);
 	while (sLen < 60)
@@ -265,6 +282,9 @@ int	sLen;
 	Serial.println();
 	
 	gTestCount++;
+
+	// begin counting total test time again
+	gTestStartTime = micros();
 }
 
 
@@ -474,8 +494,15 @@ uint8_t helperpin;
 
 #if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 	#define	kAnalogPinOffset	54
+	#define DIGITAL_ANAPIN(a)	((a) + kAnalogPinOffset)
+#elif defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__)
+	#define	kAnalogPinOffset	38
+	#define DIGITAL_ANAPIN(a)	((a) + kAnalogPinOffset)
+#elif defined(__AVR_ATmega32U4__)
+	#define DIGITAL_ANAPIN(a)	((a) < 11 ? 21 - (a) : 22)
 #else
 	#define	kAnalogPinOffset	14
+	#define DIGITAL_ANAPIN(a)	((a) + kAnalogPinOffset)
 #endif
 
 
@@ -490,7 +517,7 @@ int		analogValueLow;
 
 
 	//*	first we have to set the ANALOG pin to INPUT
-	pinMode(analogPintoTest + kAnalogPinOffset, INPUT);
+	pinMode(DIGITAL_ANAPIN(analogPintoTest), INPUT);
 	
 	passedOK	=	true;
 	
@@ -532,15 +559,15 @@ boolean	ATS_Test_AnalogInput(uint8_t analogPinToTest)
 boolean	passedOK;
 uint8_t helperpin;
 
-	if ((analogPinToTest % 2) == 0)
+	if ((DIGITAL_ANAPIN(analogPinToTest) % 2) == 0)
 	{
 		//*	if its EVEN, add 1
-		helperpin	=	kAnalogPinOffset + analogPinToTest + 1;
+		helperpin	=	DIGITAL_ANAPIN(analogPinToTest) + 1;
 	}
 	else
 	{
 		//*	if its ODD
-		helperpin	=	kAnalogPinOffset + analogPinToTest - 1;
+		helperpin	=	DIGITAL_ANAPIN(analogPinToTest) - 1;
 	}
 	passedOK	=	ATS_Test_AnalogInputWithHelper(analogPinToTest, helperpin);
 	return(passedOK);
@@ -551,7 +578,7 @@ uint8_t helperpin;
 #define	kSerialTestDelay	3
 
 
-#if (SERIAL_PORT_COUNT > 1) && !defined(__AVR_ATmega32U4__)
+#if (SERIAL_PORT_COUNT > 1)
 //************************************************************************
 //*	retunrs 0 if no errors, 1 if an error occured
 short	ATS_TestSerialLoopback(HardwareSerial *theSerialPort, char *serialPortName)
@@ -693,6 +720,7 @@ extern unsigned int __bss_start;
 extern unsigned int __bss_end;
 extern unsigned int __heap_start;
 extern void *__brkval;
+char *__brkval_maximum  __attribute__((weak));
 
 
 
@@ -703,7 +731,7 @@ int free_memory;
 
 	if((int)__brkval == 0)
 	{
-		free_memory = ((int)&free_memory) - ((int)&__bss_end);
+		free_memory = ((int)&free_memory) - ((int)&__heap_start);
 	}
 	else
 	{
@@ -712,4 +740,11 @@ int free_memory;
 	return free_memory;
 }
 
+int     ATS_GetMaximumMemoryAllocated()
+{
+	if (__brkval_maximum) {
+		return (int)__brkval_maximum - (int)&__heap_start;
+	}
+	return -1;
+}
 

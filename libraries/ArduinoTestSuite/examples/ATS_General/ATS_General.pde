@@ -9,7 +9,7 @@
 //************************************************************************
 
 #include	"WProgram.h"
-#include	"HardwareSerial.h"
+#include        "HardwareSerial.h"
 #include	"pins_arduino.h"
 #include	<ArduinoTestSuite.h>
 #include	"avr_cpunames.h"
@@ -21,6 +21,12 @@
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 #define	kBoard_PinCount		70
 #define	kBoard_AnalogCount	16
+
+#elif defined(CORE_TEENSY)
+#define kBoard_PinCount         CORE_NUM_TOTAL_PINS
+#define kBoard_AnalogCount      CORE_NUM_ANALOG
+#define SERIAL_PORT_COUNT 2
+HardwareSerial Serial1 = HardwareSerial();
 #endif
 
 

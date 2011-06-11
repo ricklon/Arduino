@@ -37,9 +37,12 @@ short	ATS_TestSerialLoopback(HardwareSerial *theSerialPort, char *serialPortName
 
 
 int		ATS_GetFreeMemory();
+int		ATS_GetMaximumMemoryAllocated();
+
 
 //************************************************************************
 //*	this has to be an inline function because calling subroutines affects free memory
+inline void ATS_ReportMemoryUsage(int _memoryUsageAtStart) __attribute__((always_inline, unused));
 inline void ATS_ReportMemoryUsage(int _memoryUsageAtStart)
 {
 int		freeMemoryAtEnd;

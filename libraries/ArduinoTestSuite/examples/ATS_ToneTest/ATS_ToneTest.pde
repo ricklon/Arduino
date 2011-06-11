@@ -35,6 +35,9 @@
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 	#define	kBoard_PinCount		70
 	#define	kBoard_AnalogCount	16
+#elif defined(CORE_TEENSY)
+	#define kBoard_PinCount		CORE_NUM_TOTAL_PINS
+	#define kBoard_AnalogCount	CORE_NUM_ANALOG
 #endif
 
 #include	<ArduinoTestSuite.h>
@@ -64,6 +67,7 @@ long			deltaFreq;
 		//*	if its ODD
 		helperpin	=	toneOutputPinNumber - 1;
 	}
+	if (helperpin >= kBoard_PinCount) return;
 
 	//*	dont set the mode of the OUTPUT pin, the tone command does that
 	
@@ -144,6 +148,7 @@ long			durationTime;
 		//*	if its ODD
 		helperpin	=	toneOutputPinNumber - 1;
 	}
+	if (helperpin >= kBoard_PinCount) return;
 
 	//*	dont set the mode of the OUTPUT pin, the tone command does that
 	
