@@ -722,7 +722,30 @@ extern unsigned int __heap_start;
 extern void *__brkval;
 char *__brkval_maximum  __attribute__((weak));
 
+/*
+ * The free list structure as maintained by the avr-libc memory allocation routines.
+ */
+struct __freelist {
+	size_t sz;
+	struct __freelist *nx;
+};
 
+/* The head of the free list structure */
+extern struct __freelist *__flp;
+
+/* Calculates the size of the free list */
+int ATS_FreeListSize()
+{
+struct __freelist*	current;
+int 			total = 0;
+
+	for (current = __flp; current; current = current->nx) {
+		total += 2; /* Add two bytes for the memory block's header  */
+		total += (int) current->sz;
+	}
+
+	return total;
+}
 
 //************************************************************************
 int	ATS_GetFreeMemory()
@@ -736,6 +759,7 @@ int free_memory;
 	else
 	{
 		free_memory = ((int)&free_memory) - ((int)__brkval);
+		free_memory += ATS_FreeListSize();
 	}
 	return free_memory;
 }
