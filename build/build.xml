@@ -82,8 +82,8 @@
     </copy>
     
     <!-- copy library folder -->
-    <copy todir="${target.path}/libraries">
-      <fileset dir="../libraries" />
+    <copy todir="${target.path}/hardware/arduino/libraries">
+      <fileset dir="../hardware/arduino/libraries" />
     </copy>
     
     <!-- copy hardware folder -->
