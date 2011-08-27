@@ -148,28 +148,29 @@ public class Compiler implements MessageConsumer {
       corePath = coreFolder.getAbsolutePath();
     }
 
-    String pins = configPreferences.get("build.pins");
-    String pinsPath = null;
+    String variant = boardPreferences.get("build.variant");
+    String variantPath = null;
     
-    if (pins != null) {
-      if (pins.indexOf(':') == -1) {
+    if (variant != null) {
+      if (variant.indexOf(':') == -1) {
 	Target t = Base.getTarget();
-	File pinsFolder = new File(new File(t.getFolder(), "pins"), pins);
-	pinsPath = pinsFolder.getAbsolutePath();
+	File variantFolder = new File(new File(t.getFolder(), "variants"), variant);
+	variantPath = variantFolder.getAbsolutePath();
       } else {
-	Target t = Base.targetsTable.get(pins.substring(0, pins.indexOf(':')));
-	File pinsFolder = new File(t.getFolder(), "pins");
-	pinsFolder = new File(pinsFolder, pins.substring(pins.indexOf(':') + 1));
-	pinsPath = pinsFolder.getAbsolutePath();
+	Target t = Base.targetsTable.get(variant.substring(0, variant.indexOf(':')));
+	File variantFolder = new File(t.getFolder(), "variants");
+	variantFolder = new File(variantFolder, variant.substring(variant.indexOf(':') + 1));
+	variantPath = variantFolder.getAbsolutePath();
       }
     }
 
 
    // 0. include paths for core + all libraries
 
+   sketch.setCompilingProgress(20);
     ArrayList<String> includePaths = new ArrayList();
    includePaths.add(corePath);
-   if (pinsPath != null) includePaths.add(pinsPath);
+   if (variantPath != null) includePaths.add(variantPath);
    for (File file : sketch.getImportedLibraries()) {
      includePaths.add(file.getPath());
    }
@@ -178,6 +179,7 @@ public class Compiler implements MessageConsumer {
    System.out.println("1. compileSketch");
    compileSketch(avrBasePath, buildPath, includePaths, configPreferences);
 
+   sketch.setCompilingProgress(30);
 
    // 2. compile the libraries, outputting .o files to: <buildPath>/<library>/
    		// 2. compile the libraries, outputting .o files to:
@@ -187,6 +189,7 @@ public class Compiler implements MessageConsumer {
 	compileLibraries(avrBasePath, buildPath, includePaths, configPreferences);
 /*
 
+   sketch.setCompilingProgress(40);
    for (File libraryFolder : sketch.getImportedLibraries()) {
      File outputFolder = new File(buildPath, libraryFolder.getName());
      File utilityFolder = new File(libraryFolder, "utility");
@@ -219,10 +222,11 @@ public class Compiler implements MessageConsumer {
     compileCore(avrBasePath, buildPath, corePath, pins, pinsPath, configPreferences);
 
    
+   sketch.setCompilingProgress(50);
 /*
   includePaths.clear();
   includePaths.add(corePath);  // include path for core only
-  if (pinsPath != null) includePaths.add(pinsPath);
+  if (variantPath != null) includePaths.add(variantPath);
   List<File> coreObjectFiles =
     compileFiles(avrBasePath, buildPath, includePaths,
               findFilesInPath(corePath, "S", true),
@@ -246,6 +250,7 @@ public class Compiler implements MessageConsumer {
     System.out.println("4. compileLink");
     compileLink(avrBasePath, buildPath, corePath, includePaths, configPreferences);
 
+   sketch.setCompilingProgress(60);
 /*
     List baseCommandLinker = new ArrayList(Arrays.asList(new String[] {
       avrBasePath + "avr-gcc",
@@ -276,13 +281,17 @@ public class Compiler implements MessageConsumer {
 */
 
     // 5. extract EEPROM data (from EEMEM directive) to .eep file.
+    sketch.setCompilingProgress(70);
     System.out.println("5. compileEep");
     compileEep(avrBasePath, buildPath, includePaths, configPreferences);
     
     // 6. build the .hex file
+    sketch.setCompilingProgress(80);
     System.out.println("6. compileHex");
     compileHex(avrBasePath, buildPath, includePaths, configPreferences);
     
+    sketch.setCompilingProgress(90);
+   
     return true;
   }
 
