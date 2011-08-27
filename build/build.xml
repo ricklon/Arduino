@@ -218,6 +218,10 @@
   </target>
 
   <target name="macosx-debug" depends="macosx-build" description="Run Mac OS X version">
+    <exec executable="macosx/work/mpide.app/Contents/MacOS/JavaApplicationStub" spawn="false"/>
+  </target>
+
+  <target name="macosx-debug" depends="macosx-build" description="Run Mac OS X version">
     <exec executable="macosx/work/Arduino.app/Contents/MacOS/JavaApplicationStub" spawn="false"/>
   </target>
 
