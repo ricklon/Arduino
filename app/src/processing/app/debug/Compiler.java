@@ -219,7 +219,7 @@ public class Compiler implements MessageConsumer {
    // collecting them into the core.a library file.
    System.out.println("3. compileCore");
    System.out.println("corePath: " + corePath);
-    compileCore(avrBasePath, buildPath, corePath, pins, pinsPath, configPreferences);
+    compileCore(avrBasePath, buildPath, corePath, variant, variantPath, configPreferences);
 
    
    sketch.setCompilingProgress(50);
@@ -768,14 +768,14 @@ public class Compiler implements MessageConsumer {
 	
 	// 3. compile the core, outputting .o files to <buildPath> and then
 	// collecting them into the core.a library file.
-	void compileCore (String avrBasePath, String buildPath, String corePath, String pins, String pinsPath, HashMap<String, String> configPreferences) 
+	void compileCore (String avrBasePath, String buildPath, String corePath, String variant, String variantPath, HashMap<String, String> configPreferences) 
 		throws RunnerException 
 	{
 		System.out.println("compileCore(...) start");
 
 		ArrayList<String>  includePaths =  new ArrayList();
 	    includePaths.add(corePath); //include core path only
-        if (pinsPath != null) includePaths.add(pinsPath);
+        if (variantPath != null) includePaths.add(variantPath);
         
          //debug  includePaths
         System.out.println("includePaths: ");
