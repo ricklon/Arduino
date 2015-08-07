@@ -1,22 +1,34 @@
-#!/bin/sh
- 
-APPDIR="$(dirname -- $(readlink -f -- "${0}") )"
+#!/usr/bin/env bash
 
-cd $APPDIR
- 
+APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
+
 for LIB in \
-    java/lib/rt.jar \
-    java/lib/tools.jar \
-    lib/*.jar \
+    $APPDIR/java/lib/rt.jar \
+    $APPDIR/java/lib/tools.jar \
+    $APPDIR/lib/*.jar \
     ;
 do
     CLASSPATH="${CLASSPATH}:${LIB}"
 done
 export CLASSPATH
 
-LD_LIBRARY_PATH=`pwd`/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+LD_LIBRARY_PATH=$APPDIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH
 
 export PATH="${APPDIR}/java/bin:${PATH}"
 
-java -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel processing.app.Base
+if [[ "$@" == *"--upload"* || "$@" == *"--verify"* || "$@" == *"--get-pref"* || "$@" == *"--install-board"* || "$@" == *"--install-library"* ]] ; then
+	SPLASH=""
+else
+	SPLASH="-splash:$APPDIR/lib/splash.png"
+fi
+
+export JAVA_TOOL_OPTIONS=`echo $JAVA_TOOL_OPTIONS | sed 's|-javaagent:/usr/share/java/jayatanaag.jar||g'`
+
+JAVA=java
+if [ -x $APPDIR/java/bin/java ]; then
+  JAVA=$APPDIR/java/bin/java
+fi
+
+$JAVA -DAPP_DIR="$APPDIR" -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel $SPLASH processing.app.Base "$@"
+
